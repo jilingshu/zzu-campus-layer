@@ -79,6 +79,41 @@ export function todayShanghai(now = Date.now()): string {
   return formatDate(now + 8 * 3_600_000);
 }
 
+/** 首页「今天的课」几点后翻到第二天（北京时间）。 */
+export const DAY_ROLLOVER_HOUR = 21;
+
+/** 北京时间的小时（0–23）。 */
+export function shanghaiHour(now = Date.now()): number {
+  return new Date(now + 8 * 3_600_000).getUTCHours();
+}
+
+/**
+ * 首页该显示哪一天：21 点以后算「明天」。
+ * 只影响首页那张课表卡片，不影响通知/空教室/学期课表的「今天」。
+ */
+export function displayDayShanghai(
+  now = Date.now(),
+  rollHour = DAY_ROLLOVER_HOUR,
+): { date: string; rolled: boolean } {
+  const date = todayShanghai(now);
+  const rolled = shanghaiHour(now) >= rollHour;
+  return { date: rolled ? addDays(date, 1) : date, rolled };
+}
+
+/** 距离下一个「翻页点」还有多少毫秒（用于定时刷新首页）。 */
+export function msUntilRollover(now = Date.now(), rollHour = DAY_ROLLOVER_HOUR): number {
+  const sh = now + 8 * 3_600_000;
+  const dayStart = Math.floor(sh / 86_400_000) * 86_400_000;
+  const target = dayStart + rollHour * 3_600_000;
+  return target > sh ? target - sh : target + 86_400_000 - sh;
+}
+
+/** 距离下一个北京时间 0 点还有多少毫秒（21 点翻到「明天」后，过午夜要翻回「今天」）。 */
+export function msUntilMidnightShanghai(now = Date.now()): number {
+  const sh = now + 8 * 3_600_000;
+  return Math.floor(sh / 86_400_000) * 86_400_000 + 86_400_000 - sh;
+}
+
 /** 把连续周次压成 "1-8,10" 的文本 */
 export function compressWeeks(weeks: number[]): string {
   const s = [...weeks].sort((a, b) => a - b);
