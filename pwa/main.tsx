@@ -44,7 +44,7 @@ import {
   type NoticePrefs,
 } from '../src/core/noticeStore';
 import { getNoticeBody, runTool } from '../src/core/tools';
-import { todayShanghai } from '../src/core/util';
+import { displayDayShanghai, msUntilMidnightShanghai, msUntilRollover, todayShanghai } from '../src/core/util';
 import type { Term } from '../src/core/types';
 import { NoticeBoard } from '../src/ui/notice';
 import { HomeView, MineView, ScheduleView, TabBar, type Caller, type TabKey } from './views';
@@ -217,6 +217,31 @@ const looksAuthLost = (msg: string): boolean => AUTH_LOST_RE.test(msg);
   const [quickAsks, setQuickAsks] = useState<QuickAsk[]>(defaultQuickAsks);
   const [quickEditing, setQuickEditing] = useState(false);
   const [today] = useState(todayShanghai());
+  /* 首页课表：20 点后自动显示「明天」的那张，过点后定时翻页 */
+  const [homeDay, setHomeDay] = useState(() => displayDayShanghai());
+  useEffect(() => {
+    let timer = 0;
+    const sync = () => setHomeDay(displayDayShanghai());
+    const arm = () => {
+      /* 20:00 翻到明天，0 点再翻回「今天」——长开着的页面两个点都要踩到 */
+      const wait = Math.min(msUntilRollover(), msUntilMidnightShanghai());
+      timer = window.setTimeout(() => {
+        sync();
+        arm();
+      }, wait + 1500);
+    };
+    arm();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') sync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', sync);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', sync);
+    };
+  }, []);
   const scroller = useRef<HTMLElement | null>(null);
   /* refresh() 读完存档之前别回写，否则会用空列表把上次的记录覆盖掉 */
   const hydrated = useRef(false);
@@ -944,7 +969,9 @@ const looksAuthLost = (msg: string): boolean => AUTH_LOST_RE.test(msg);
       {tab === 'home' && (
         <div class="page-live" key="home">
           <HomeView
-            today={today}
+            today={homeDay.date}
+            rolled={homeDay.rolled}
+            realToday={today}
             call={call}
             refreshKey={homeRefresh}
             busy={homeBusy}

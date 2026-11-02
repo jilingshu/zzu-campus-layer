@@ -115,6 +115,10 @@ function writeHomeCache(today: string, data: HomeCache): void {
 
 export function HomeView(props: {
   today: string;
+  /** 20 点后首页翻到「明天」：标题、文案、课表都按明天来 */
+  rolled: boolean;
+  /** 真正的今天：空教室等卡片仍按它查 */
+  realToday: string;
   call: Caller;
   refreshKey: number;
   onOpen: (kind: 'library' | 'rooms' | 'card') => void;
@@ -126,7 +130,7 @@ export function HomeView(props: {
   busy: boolean;
   /** 宿舍电量：卡片上那句话 + 配色档位 */
 }) {
-  const { today, call, refreshKey } = props;
+  const { today, call, refreshKey, realToday, rolled } = props;
   /* 上次打开时的结果：先铺出来，网络回来再覆盖，省得白屏等 */
   const cached = useMemo(() => readHomeCache(today), [today]);
   const [courses, setCourses] = useState<Course[] | null>(cached?.courses ?? null);
@@ -143,7 +147,7 @@ export function HomeView(props: {
 
     /* 课表排在第一个、单独一条：它最快回来，回来就立刻渲染 */
     void (async () => {
-      const sched = await call('get_schedule', { day: 'today' });
+      const sched = await call('get_schedule', { day: rolled ? 'tomorrow' : 'today' });
       if (!alive) return;
       if (authFail(sched)) setNeedLogin(true);
       if (sched.ok && sched.data) {
@@ -176,7 +180,7 @@ export function HomeView(props: {
     })();
 
     void (async () => {
-      const rooms = await call('find_free_room', { date: today, limit: 5 });
+      const rooms = await call('find_free_room', { date: realToday, limit: 5 });
       if (!alive) return;
       if (authFail(rooms)) setNeedLogin(true);
       const n = rooms.ok ? Number(((rooms.data as any)?.data ?? rooms.data)?.count ?? 0) : -1;
@@ -203,7 +207,7 @@ export function HomeView(props: {
     return () => {
       alive = false;
     };
-  }, [refreshKey, today]);
+  }, [refreshKey, today, realToday, rolled]);
 
   /* 拿到新课表就落一份缓存，下次打开先铺它 */
   useEffect(() => {
@@ -213,7 +217,8 @@ export function HomeView(props: {
 
   const nowMin = minutesOf(`${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`);
   const list = courses ?? [];
-  const next = list.find((c) => minutesOf(c.endTime) > nowMin);
+  /* 翻到明天时，「下一节」就是明天第一节，不能拿今天的时钟去比 */
+  const next = rolled ? list[0] : list.find((c) => minutesOf(c.endTime) > nowMin);
   /* 每门课一个固定颜色，跟「学期课表」那边同一套分配逻辑，但用更好区分的亮色 */
   const lessonColors = useMemo(() => assignColors(list, LESSON_COLORS), [list]);
 
@@ -225,7 +230,7 @@ export function HomeView(props: {
             {props.today.replace(/-/g, ' / ')}
             {week ? ` · 第 ${week} 周` : ''}
           </div>
-          <h1>今天</h1>
+          <h1>{rolled ? '明天' : '今天'}</h1>
         </div>
         <div class="acts">
           <button class="iconbtn" onClick={props.onBell} aria-label="通知">
@@ -246,7 +251,7 @@ export function HomeView(props: {
       <main class="tabbody">
         <section class="card">
           <div class="cardhead">
-            <strong>今日课表</strong>
+            <strong>{rolled ? '明日课表' : '今日课表'}</strong>
             <span>
               {needLogin
                 ? ''
@@ -258,18 +263,18 @@ export function HomeView(props: {
             </span>
           </div>
           {needLogin ? (
-            <p class="empty-line">还没登录：去「我的 → 账号」登录一次，这里会显示今天的课。</p>
+            <p class="empty-line">还没登录：去「我的 → 账号」登录一次，这里会显示{rolled ? '明天' : '今天'}的课。</p>
           ) : (
             <>
               {err && <p class="empty-line">{err}</p>}
               {!err && courses === null && <p class="empty-line">正在读课表…</p>}
-              {!err && courses !== null && list.length === 0 && <p class="empty-line">今天没有课，好好休息。</p>}
+              {!err && courses !== null && list.length === 0 && <p class="empty-line">{rolled ? '明天没有课，安心休息。' : '今天没有课，好好休息。'}</p>}
             </>
           )}
           <div class="lessons">
             {list.map((c) => {
-              const done = minutesOf(c.endTime) <= nowMin;
-              const live = !done && minutesOf(c.startTime) <= nowMin;
+              const done = !rolled && minutesOf(c.endTime) <= nowMin;
+              const live = !rolled && !done && minutesOf(c.startTime) <= nowMin;
               return (
                 <div
                   class={`lesson${done ? ' done' : ''}${live ? ' now' : ''}`}
@@ -293,7 +298,13 @@ export function HomeView(props: {
           </div>
           <div class="cardhead" style="margin:8px 0 0">
             <span>
-              {needLogin ? '' : next ? `下一节 ${next.startTime} ${shortName(next.name)}` : '今天的课都上完了'}
+              {needLogin
+                ? ''
+                : next
+                  ? `${rolled ? '明天' : '下一节'} ${next.startTime} ${shortName(next.name)}`
+                  : rolled
+                    ? '明天没课'
+                    : '今天的课都上完了'}
             </span>
             <button class="link" onClick={props.onSchedule}>
               学期课表 ›
