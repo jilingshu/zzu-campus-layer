@@ -1600,36 +1600,36 @@ html[data-theme='ink'] .msg.user .bubble strong {
 }
 
 /* 米白下回答气泡是象牙白，`.md strong{color:#fff}` 会直接看不见，压回墨色 */
-html:not([data-theme='ink']) .bubble .md strong,
-html:not([data-theme='ink']) .bubble strong {
+html[data-theme='cream'] .bubble .md strong,
+html[data-theme='cream'] .bubble strong {
   color: #0f1f3d !important;
 }
 
 /* 米白配色下：白底气泡会糊进米黄背景里，改成蓝底（跟顶栏同一个蓝） */
-html:not([data-theme='ink']) .msg.user .bubble {
+html[data-theme='cream'] .msg.user .bubble {
   background: #1b4fd8 !important;
   color: #fdf8ec !important;
   border-color: #1b4fd8 !important;
   box-shadow: 0 1px 3px rgba(27, 79, 216, 0.3);
 }
 
-html:not([data-theme='ink']) .msg.user .bubble .md strong,
-html:not([data-theme='ink']) .msg.user .bubble strong {
+html[data-theme='cream'] .msg.user .bubble .md strong,
+html[data-theme='cream'] .msg.user .bubble strong {
   color: #ffffff !important;
 }
 
-html:not([data-theme='ink']) .msg.user .bubble a {
+html[data-theme='cream'] .msg.user .bubble a {
   color: #d6e4ff;
   text-decoration-color: rgba(214, 228, 255, 0.6);
 }
 
-html:not([data-theme='ink']) .msg.user .bubble .via,
-html:not([data-theme='ink']) .msg.user .bubble .md figcaption {
+html[data-theme='cream'] .msg.user .bubble .via,
+html[data-theme='cream'] .msg.user .bubble .md figcaption {
   color: #c6d7f8;
 }
 
 /* 回答在米白上贴象牙白，描边收细一点，别像块黑框 */
-html:not([data-theme='ink']) .bubble {
+html[data-theme='cream'] .bubble {
   background: #fffdf7 !important;
   border-color: rgba(15, 31, 61, 0.18) !important;
   box-shadow: 0 1px 2px rgba(15, 31, 61, 0.08);
@@ -1675,7 +1675,9 @@ html[data-theme='teal'] .bubble {
   opacity: 1 !important;
 }
 
-html[data-theme='teal'] .bubble * {
+/* 只管「它的回答」：这条以前写成 .bubble *，把我自己那条白底气泡里的字也刷成浅色了。
+   用 :where() 压掉特异性，别盖过下面 .via / 天蓝小标题这些更具体的规则。 */
+html[data-theme='teal'] :where(.msg.assistant .bubble) * {
   color: #e9f4f3 !important;
   opacity: 1 !important;
 }
@@ -1691,10 +1693,9 @@ html[data-theme='teal'] .bubble .dim {
   color: #7fc7c0 !important;
 }
 
-/* ===== 蓝绿主题：回答里的加粗小标题改成天蓝色，别再被米白那条深蓝规则压住 ===== */
-/* 米白用 html:not([data-theme='ink']) 把 .bubble strong 压成 #0f1f3d（深蓝），
-   teal 也命中这条：深底 + 深蓝字，像「今天有 3 条新通知」这种小标题几乎看不见。
-   这里只在 teal 下覆盖成天蓝色，对比度约 9:1。 */
+/* ===== 蓝绿主题：回答里的加粗小标题用天蓝色 ===== */
+/* 蓝绿主题里，回答的加粗小标题用天蓝色（深底对比度约 9:1），
+   比默认的白字更有层次，也和「模型编排」那行的青灰字区分开。 */
 html[data-theme='teal'] .bubble .md strong,
 html[data-theme='teal'] .bubble strong {
   color: #7fd4ff !important;
