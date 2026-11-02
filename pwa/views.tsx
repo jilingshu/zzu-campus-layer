@@ -115,7 +115,7 @@ function writeHomeCache(today: string, data: HomeCache): void {
 
 export function HomeView(props: {
   today: string;
-  /** 21 点后首页翻到「明天」：标题、文案、课表都按明天来 */
+  /** 20 点后首页翻到「明天」：标题、文案、课表都按明天来 */
   rolled: boolean;
   /** 真正的今天：空教室等卡片仍按它查 */
   realToday: string;

@@ -348,6 +348,8 @@ v0.1 假设「用 content script 解析教务网页的 DOM」。实测后这一�
 | 46 | **0.2.84 去掉宿舍电量**（贡献者 Ayaka688）：①`ecard.v.zzu.edu.cn` 不带 CORS，浏览器里的 PWA 永远发不出请求，只有安卓壳的原生通道（0.2.83 的 `CampusNet`）或扩展面板才读得到；②考虑到手机上都装新版 APK 的成本，功能整体撤掉——删 `src/core/energy.ts`、`test/energy.test.ts`、`CampusNet.java`、`EnergyView`/`PlacePicker`/`Spark`、主页第四块入口与全部电量样式；③`manifest.json` 收回 `https://ecard.v.zzu.edu.cn/*` 权限，主页入口恢复一行三列，关于页/README 致谢只保留真正在用的项目。 |
 | 47 | **0.2.85 两处手感修复**（贡献者 Ayaka688）：①切到 AI 栏时聊天区重新挂载、`scrollTop` 归零，看起来像「每次都从最上面开始」——现在进入时在绘制前直接 `scrollTop = scrollHeight`，落在最新一条，并把「贴底」标记复位；②主页「今日课表」原来是纯文字列表，改成每节课一张同色系卡片（左侧色条 + 淡底 + 同色课名与时间），颜色按课名哈希分配、撞色顺延，深浅两套主题各一套处理；③顺手修：拉课表失败时不再把缓存清成「今天没有课」，只提示一句。 |
 
+| 48 | **0.2.86 首页课表晚上八点翻到明天**（PR #9，贡献者 jilingshu；按用户要求把翻页点从 PR 原来的 21:00 改成 **20:00**）：首页那张课表卡片在 `DAY_ROLLOVER_HOUR = 20`（`src/core/util.ts`）之后显示「明天」——标题「明日课表」、顶部日期、`get_schedule` 的 `day` 参数、空状态文案一起翻；「下一节」直接取明天第一节，不再用当前时钟给课程打「已上完 / 正在上」；**只翻首页课表**，空教室（`find_free_room` 用 `realToday`）、通知、学期课表仍按真正的今天算；长开着的页面在 20:00 与 0 点各校准一次（`msUntilRollover` / `msUntilMidnightShanghai` 取较小值再 `+1500ms`），切回前台 / 窗口聚焦也会重算 | `test/dayroll.test.ts` 13 例（含 `DAY_ROLLOVER_HOUR === 20` 这条锁死翻页点的断言、19:59/20:00/23:59/00:01 四个边界、跨月、`msUntilRollover` 三条、`msUntilMidnightShanghai` 两条）；`tsc` 0 错、`vitest` 581 passed / 12 skipped、`vite build` ✓ |
+
 **本轮仍未做（明确记录）**
 - 图书馆座位图依赖该站自身登录态（与学校 CAS 是两套账号），且**同一时间只允许一台设备在线**；
 - 一层一次问会发 4–5 次请求（每间一次），手机 2–4 秒；

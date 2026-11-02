@@ -217,13 +217,13 @@ const looksAuthLost = (msg: string): boolean => AUTH_LOST_RE.test(msg);
   const [quickAsks, setQuickAsks] = useState<QuickAsk[]>(defaultQuickAsks);
   const [quickEditing, setQuickEditing] = useState(false);
   const [today] = useState(todayShanghai());
-  /* 首页课表：21 点后自动显示「明天」的那张，过点后定时翻页 */
+  /* 首页课表：20 点后自动显示「明天」的那张，过点后定时翻页 */
   const [homeDay, setHomeDay] = useState(() => displayDayShanghai());
   useEffect(() => {
     let timer = 0;
     const sync = () => setHomeDay(displayDayShanghai());
     const arm = () => {
-      /* 21:00 翻到明天，0 点再翻回「今天」——长开着的页面两个点都要踩到 */
+      /* 20:00 翻到明天，0 点再翻回「今天」——长开着的页面两个点都要踩到 */
       const wait = Math.min(msUntilRollover(), msUntilMidnightShanghai());
       timer = window.setTimeout(() => {
         sync();

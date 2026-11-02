@@ -79,8 +79,8 @@ export function todayShanghai(now = Date.now()): string {
   return formatDate(now + 8 * 3_600_000);
 }
 
-/** 首页「今天的课」几点后翻到第二天（北京时间）。 */
-export const DAY_ROLLOVER_HOUR = 21;
+/** 首页「今天的课」几点后翻到第二天（北京时间）。晚上八点，不是九点。 */
+export const DAY_ROLLOVER_HOUR = 20;
 
 /** 北京时间的小时（0–23）。 */
 export function shanghaiHour(now = Date.now()): number {
@@ -88,7 +88,7 @@ export function shanghaiHour(now = Date.now()): number {
 }
 
 /**
- * 首页该显示哪一天：21 点以后算「明天」。
+ * 首页该显示哪一天：20 点以后算「明天」。
  * 只影响首页那张课表卡片，不影响通知/空教室/学期课表的「今天」。
  */
 export function displayDayShanghai(
@@ -108,7 +108,7 @@ export function msUntilRollover(now = Date.now(), rollHour = DAY_ROLLOVER_HOUR):
   return target > sh ? target - sh : target + 86_400_000 - sh;
 }
 
-/** 距离下一个北京时间 0 点还有多少毫秒（21 点翻到「明天」后，过午夜要翻回「今天」）。 */
+/** 距离下一个北京时间 0 点还有多少毫秒（20 点翻到「明天」后，过午夜要翻回「今天」）。 */
 export function msUntilMidnightShanghai(now = Date.now()): number {
   const sh = now + 8 * 3_600_000;
   return Math.floor(sh / 86_400_000) * 86_400_000 + 86_400_000 - sh;
